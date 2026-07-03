@@ -18,7 +18,9 @@ def amazon_scrap(url: str):
         posters = {
             "title": None,
             "landscape": None,
-            "portrait": None
+            "portrait": None,
+            "cover": None,
+            "logo": None,
         }
 
         title_match = re.search(
@@ -36,6 +38,14 @@ def amazon_scrap(url: str):
             html_text,
             re.DOTALL
         )
+        releaseYear = re.search(
+            r'"releaseYear"\s*:\s*(\d+)',
+            html_text,
+            re.DOTALL
+        )
+        year = releaseYear.group(1) if releaseYear else None
+        if posters["title"]:
+            posters["title"] = f"{posters['title']} - ({year})"
 
         if image_block_match:
             image_block = image_block_match.group(1)
@@ -44,8 +54,16 @@ def amazon_scrap(url: str):
                 r'"covershot"\s*:\s*"([^"]+)"',
                 image_block
             )
+            heroshot_match = re.search(
+                r'"heroshot"\s*:\s*"([^"]+)"',
+                image_block
+            )
             packshot_match = re.search(
                 r'"packshot"\s*:\s*"([^"]+)"',
+                image_block
+            )
+            logo_match = re.search(
+                r'"titleLogo"\s*:\s*"([^"]+)"',
                 image_block
             )
 
@@ -55,12 +73,18 @@ def amazon_scrap(url: str):
             if packshot_match:
                 posters["portrait"] = packshot_match.group(1)
 
+            if heroshot_match:
+                posters["cover"] = heroshot_match.group(1)
+
+            if logo_match:
+                posters["logo"] = logo_match.group(1)
+
         return posters
     except json.JSONDecodeError:
         return {"error": "JSON decode error"}
 
 def amazon(url: str):
-    api = f"{url}&dvWebAppClientVersion=1.0.120924.0"
+    api = f"{url}&dvWebAppClientVersion=1.0.125203.0"
 
     headers = {
         "Accept": "application/json",
@@ -76,9 +100,10 @@ def amazon(url: str):
         headers=headers,
         timeout=20
     )
-    print("Status Code:", r.status_code)
+    print(f"Amazon API response status code: {r.status_code}")
     if r.status_code != 200:
         return amazon_scrap(url)
+    
     data = r.json()
     result = {
         "title": None,
@@ -91,7 +116,7 @@ def amazon(url: str):
     try:
         page = data.get("body", [])
         if not page:
-            return result
+            return amazon_scrap(url)
 
         atf = page.get("atf", {})
         state = atf.get("state", {})
@@ -127,7 +152,3 @@ def amazon_poster(url: str = Query(..., description="Amazon content URL")):
         return JSONResponse(content=result, status_code=400)
 
     return JSONResponse(content=result, status_code=200)
-
-# if __name__ == "__main__":
-#     test_url = "https://www.primevideo.com/detail/0LDC8RWW51I5H7Q212ODF5JBAY/ref=atv_sr_fle_c_Tn74RA_1_1_1"
-#     print(amazon(test_url))
