@@ -79,30 +79,62 @@ def plex(url):
 
     response = requests.get(url, headers=headers, cookies=cookies)
     html = response.text
+    # print(html)  # Debug: Print the fetched HTML content
     result = {}
 
-    # -------- SEO --------
-    seo_json = extract_balanced_json(html, r'"seo"\s*:\s*{')
-    if seo_json:
-        seo_data = json.loads(seo_json)
-        title = clean_title(seo_data.get("title"))
-        result["title"] = title if title else seo_data.get("title")
-        
-    # -------- OpenGraph (Landscape) --------
-    og_json = extract_balanced_json(html, r'"openGraph"\s*:\s*{')
-    if og_json:
-        og_data = json.loads(og_json)
-        images = og_data.get("images", [])
-        if images:
-            result["landscape"] = images[0].get("url")
+    # -------- 1. Extract Name & Portrait from dangerouslySetInnerHTML / @graph --------
+    # Target the inner html content of the script tag
+    inner_html_match = re.search(r'"__html"\s*:\s*"({.*?})"\s*}', html)
+    if inner_html_match:
+        try:
+            raw_json_str = inner_html_match.group(1).replace('\\"', '"').replace('\\\\', '\\')
+            script_data = json.loads(raw_json_str)
+            
+            graph = script_data.get("@graph", [])
+            for item in graph:
+                if item.get("@type") in ["TVSeries", "Movie", "Show"]:
+                    if "name" in item:
+                        result["title"] = item["name"]
+                    if "image" in item:
+                        # Clean up the HTML entity &amp; into an actual &
+                        result["portrait"] = item["image"].replace("&amp;", "&")
+        except Exception:
+            pass
 
-    # -------- StructuredData (Portrait) --------
-    structured_json = extract_balanced_json(html, r'"structuredData"\s*:\s*{')
-    if structured_json:
-        structured_data = json.loads(structured_json)
-        graph = structured_data.get("@graph", [])
-        if graph:
-            result["portrait"] = graph[0].get("image")
+    # -------- 2. Fallback / Alternative for Title & Year (from metadataItem) --------
+    # If the script parsing misses it, extract title and release date from metadataItem
+    if "title" not in result or "year" not in result:
+        metadata_match = re.search(r'"metadataItem"\s*:\s*({.*?})', html)
+        if metadata_match:
+            try:
+                metadata = json.loads(metadata_match.group(1))
+                if "title" in metadata and not result.get("title"):
+                    result["title"] = metadata["title"]
+                
+                if "releaseDate" in metadata:
+                    # Extract just the 4-digit year from "2026-07-02"
+                    year_match = re.search(r'\d{4}', metadata["releaseDate"])
+                    if year_match:
+                        year = year_match.group(0)
+            except Exception:
+                # Simple regex fallbacks if JSON parsing hits boundaries
+                if not result.get("title"):
+                    t_match = re.search(r'"title"\s*:\s*"([^"]+)"', html)
+                    if t_match: result["title"] = t_match.group(1)
+                
+                y_match = re.search(r'"releaseDate"\s*:\s*"(\d{4})', html)
+                if y_match: year = y_match.group(1)
+
+    og_image_match = re.search(r'{"property"\s*:\s*"og:image"\s*,\s*"content"\s*:\s*"([^"]+)"}', html)
+    if og_image_match:
+        result["landscape"] = og_image_match.group(1).replace("&amp;", "&")
+
+    title = result.get("title", "Unknown Title")
+
+    if year:
+        result["title"] = f"{title} - ({year})"
+    else:
+        result["title"] = title
 
     return result
 
