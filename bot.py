@@ -15,6 +15,62 @@ BOT_TOKEN = os.getenv("BOT_TOKEN") or os.getenv("TELEGRAM_BOT_TOKEN")
 API_TOKEN = os.getenv("API_TOKEN")
 API_BASE_URL = os.getenv("API_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
 
+CC_HANDLE = os.getenv("CC_HANDLE", "@Mrn_Officialx")
+
+# Friendly display name shown as "<Label> Poster: <link>", keyed by API endpoint
+# so every alias of a service (amz/amazon, mx/mxplayer, etc.) shares one label.
+SERVICE_LABELS = {
+    "/posters/aaonxt": "AaoNxt",
+    "/posters/addatimes": "Addatimes",
+    "/posters/aha": "Aha",
+    "/posters/airtel": "Airtelxstream",
+    "/posters/amazon": "Amazon Prime",
+    "/posters/apple": "Apple TV",
+    "/posters/atrangii": "Atrangii",
+    "/posters/bms": "BookMyShow",
+    "/posters/chaupal": "Chaupal",
+    "/posters/crunchyroll": "Crunchyroll",
+    "/posters/dangal": "Dangal Play",
+    "/posters/erosnow": "Eros Now",
+    "/posters/hoichoi": "Hoichoi",
+    "/posters/hulu": "Hulu",
+    "/posters/hungama": "Hungama",
+    "/posters/iqyi": "iQIYI",
+    "/posters/jojo": "Jojo",
+    "/posters/lionsgate": "Lionsgate Play",
+    "/posters/mubi": "Mubi",
+    "/posters/mxplayer": "MX Player",
+    "/posters/nf": "Netflix",
+    "/posters/nf/episode": "Netflix",
+    "/posters/plex": "Plex",
+    "/posters/playflix": "Playflix",
+    "/posters/sainaplay": "SainaPlay",
+    "/posters/shemaroo": "ShemarooMe",
+    "/posters/sonyliv": "Sonyliv",
+    "/posters/sunnxt": "SunNXT",
+    "/posters/tataplay": "Tata Play Binge",
+    "/posters/ticketnew": "TicketNew",
+    "/posters/tubi": "Tubi",
+    "/posters/ultra": "Ultra",
+    "/posters/ultrajhakaas": "UltraJhakaas",
+    "/posters/viki": "Viki",
+    "/posters/viu": "Viu",
+    "/posters/viva": "Vivamax",
+    "/posters/wetv": "WeTV",
+    "/posters/youku": "Youku",
+    "/posters/youtube": "YouTube",
+    "/posters/zee5": "Zee5",
+    "/posters/jiohotstar": "JioHotstar",
+    "/posters/jiohotstar/episode": "JioHotstar",
+}
+
+# The field shown as a raw, full link on the "<Label> Poster:" line.
+PRIMARY_FIELD_ORDER = ["landscape", "cover", "portrait", "still", "poster", "banner", "thumbnail", "image"]
+
+# Every other field present gets shown as a compact "<Field>: Link" hyperlink,
+# in this order.
+SECONDARY_FIELD_ORDER = ["portrait", "banner", "cover", "logo", "square", "still", "poster", "thumbnail", "backdrop"]
+
 SERVICES = {
     "aaonxt": "/posters/aaonxt",
     "addatimes": "/posters/addatimes",
@@ -176,33 +232,36 @@ def fetch_poster(service: str, content_url: str):
         data = {"error": response.text[:1000]}
 
     if response.status_code >= 400:
-        raise RuntimeError(data.get("error") or data.get("detail") or f"API error {response.status_code}")
+        short = data.get("error") or data.get("detail") or f"API error {response.status_code}"
+        extra = data.get("details") or data.get("raw")
+        if extra:
+            short = f"{short} | {str(extra)[:300]}"
+        raise RuntimeError(short)
     return data
 
 
 def format_result(service: str, data: dict):
     title = data.get("title") or data.get("name") or data.get("movie") or "Poster result"
-    lines = [f"<b>{esc(title)}</b>", f"<b>Service:</b> <code>{esc(service)}</code>"]
+    label = SERVICE_LABELS.get(SERVICES.get(service, ""), service.title())
 
-    # Show common poster fields first.
-    priority_keys = [
-        "still", "portrait", "square", "landscape", "banner", "poster", "cover", "thumbnail", "image", "logo", "backdrop", "url"
-    ]
-    shown = set()
+    primary_key = next((k for k in PRIMARY_FIELD_ORDER if data.get(k)), None)
+    primary_url = data.get(primary_key) if primary_key else None
 
-    for key in priority_keys:
+    lines = [f"{esc(label)} Poster: {esc(primary_url) if primary_url else 'N/A'}", ""]
+
+    for key in SECONDARY_FIELD_ORDER:
+        if key == primary_key:
+            continue
         value = data.get(key)
         if value:
-            lines.append(f"<b>{esc(key.title())}:</b> {esc(value)}")
-            shown.add(key)
+            lines.append(f'{esc(key.title())}: <a href="{esc(value)}">Link</a>')
 
-    for key, value in data.items():
-        if key in shown or key in {"title", "name", "movie"}:
-            continue
-        if isinstance(value, (str, int, float)) and value:
-            lines.append(f"<b>{esc(key.title())}:</b> {esc(value)}")
+    lines.append("")
+    lines.append(esc(title))
+    lines.append("")
+    lines.append(f"<blockquote>cc: {esc(CC_HANDLE)}</blockquote>")
 
-    return "\n".join(lines)
+    return "\n".join(lines), primary_url
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -304,27 +363,16 @@ async def send_poster(update: Update, service: str, content_url: str):
     msg = await update.effective_message.reply_text("Fetching poster...")
     try:
         data = fetch_poster(service, content_url)
-        text = format_result(service, data)
-        await msg.edit_text(text, parse_mode=ParseMode.HTML, disable_web_page_preview=False)
+        text, primary_url = format_result(service, data)
 
-        # Upload poster images to Telegram when direct image URLs are present.
-        image_keys = [
-            "still", "portrait", "square", "landscape", "banner", "poster", "cover",
-            "thumbnail", "image", "logo", "backdrop"
-        ]
-        sent = set()
-        for key in image_keys:
-            image_url = data.get(key)
-            if not image_url or image_url in sent:
-                continue
-            sent.add(image_url)
+        await msg.edit_text(text, parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+
+        if primary_url:
             try:
-                await update.effective_message.reply_photo(
-                    photo=image_url,
-                    caption=f"{key.title()} - {service}"[:1024],
-                )
+                await update.effective_message.reply_photo(photo=primary_url)
             except Exception:
-                # Some providers return URLs Telegram cannot fetch; the text link above remains available.
+                # Some providers return URLs Telegram itself cannot fetch;
+                # the text message above still has the working link.
                 pass
     except Exception as exc:
         await msg.edit_text(f"❌ Error: <code>{esc(exc)}</code>", parse_mode=ParseMode.HTML, disable_web_page_preview=True)
