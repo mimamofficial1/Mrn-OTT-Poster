@@ -36,7 +36,8 @@ def lionsgate(url):
         "title": f"{title} - ({year})" if year else title,
         "portrait": clean_portrait,
         "landscape": landscape,
-        "banner": banner
+        "banner": banner,
+        "square": None,
     }
 
 @router.get("/lionsgate")

@@ -97,7 +97,8 @@ def scrape_hulu_images(url):
         "title":title,
         "landscape": image_url,
         "cover": final_background,
-        "logo": final_title
+        "logo": final_title,
+        "square": None,
     }
 
 

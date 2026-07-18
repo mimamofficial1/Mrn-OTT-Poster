@@ -8,7 +8,7 @@ router = APIRouter()
 def iq(url: str):
     try:
         html = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}).text
-        result = {"title": None, "landscape": None, "portrait": None}
+        result = {"title": None, "landscape": None, "portrait": None, "square": None}
 
         # Extract title
         title_match = re.search(r'<title>(.*?)</title>', html, re.IGNORECASE)

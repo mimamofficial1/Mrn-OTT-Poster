@@ -26,6 +26,7 @@ class Crunchyroll:
             "title": f"{data.get('title')} - {data.get('series_launch_year')}",
             "landscape": data.get("images", {}).get("poster_wide", [[{}]])[0][-1].get("source", ""),
             "portrait": data.get("images", {}).get("poster_tall", [[{}]])[0][-1].get("source", ""),
+            "square": None,
         }
 
     def get_poster(self, url: str):

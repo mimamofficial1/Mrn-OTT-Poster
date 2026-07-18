@@ -63,7 +63,8 @@ def atrangii(url):
             return {
                 "title": f"{title} - ({year})",
                 "landscape": landscape,
-                "portrait": portrait
+                "portrait": portrait,
+                "square": None,
             }
 
         except Exception:

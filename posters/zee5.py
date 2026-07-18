@@ -82,6 +82,7 @@ def scrape_zee5_meta(url: str):
 
     result = {
         "title": None,
+        "square": None,
     }
 
     # =====================================================

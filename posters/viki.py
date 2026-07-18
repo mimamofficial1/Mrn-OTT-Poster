@@ -17,12 +17,12 @@ def scrape_viki_api(container_id: str):
         "Content-Type": "application/json",
         "Origin": "https://www.viki.com",
         "Referer": "https://www.viki.com/",
-        "X-Viki-App-Ver": "26.6.4-4.122.0",
+        "X-Viki-App-Ver": "26.2.3-4.56.0",
     }
 
     params = {
         "token": "undefined",
-        "direction": "asc",
+        "direction": "desc",
         "with_upcoming": "true",
         "sort": "number",
         "blocked": "true",
@@ -34,47 +34,33 @@ def scrape_viki_api(container_id: str):
     r.raise_for_status()
 
     data = r.json()
-    response_list = data.get("response", [])
-    if not response_list:
-        raise ValueError("No episodes found for this container.")
+    # print(json.dumps(data, indent=2))
+    response = data.get("response", [])[0]
 
-    episode = response_list[0]
-    container = episode.get("container", {})
-
-    # --- Title ---
+    # 🎬 Title
+    container = response.get("container", {})
     titles = container.get("titles", {})
-    title = titles.get("en", "Unknown")
+    title = titles.get("en")
 
-    air_time = episode.get("viki_air_time")
-    if air_time:
-        year = datetime.fromtimestamp(air_time).year
-    else:
-        created = episode.get("created_at")
-        if created:
-            year = created.split("-")[0]
-        else:
-            year = None
-
+    # 🖼 Landscape
     images = container.get("images", {})
+    landscape = images.get("atv_cover")["url"]
 
-    landscape = (
-        images.get("title_thumbnails", {})
-        .get("16x9", {})
-        .get("en", {})
-        .get("url")
-    )
-
-    # Portrait – use the main poster (best quality vertical image)
-    portrait = images.get("title_thumbnails", {}).get("2x3", {}).get("en", {}).get("url")
-
-    # Cover – fallback to poster if not otherwise defined
-    cover = images.get("poster", {}).get("url")  # you may also use a different key
+    # 📅 Year
+    created_at = response.get("updated_at")
+    year = ""
+    if created_at:
+        try:
+            year = datetime.fromisoformat(
+                created_at.replace("Z", "")
+            ).year
+        except Exception:
+            pass
 
     return {
-        "title": f"{title} - ({year})" if year else title,
+        "title": f"{title} - ({year})",
         "landscape": landscape,
-        "portrait": portrait,
-        "cover": cover,
+        "square": None,
     }
 
 def viki(url: str):
@@ -86,15 +72,18 @@ def viki(url: str):
         image = None
         year = None
 
+        # ✅ Extract <title>
         title_match = re.search(r'<title>(.*?)</title>', html, re.IGNORECASE | re.DOTALL)
         if title_match:
             full_title = title_match.group(1)
             title = full_title.split(" |")[0].strip()
 
+        # ✅ Extract from __NEXT_DATA__ block
         json_match = re.search(r'<script[^>]*id=["\']__NEXT_DATA__["\'][^>]*>(.*?)</script>', html, re.DOTALL)
         if json_match:
             json_data = json_match.group(1)
 
+            # ✅ Match atv_cover.url value
             image_match = re.search(r'"atv_cover"\s*:\s*{[^}]*?"url"\s*:\s*"([^"]+)"', json_data)
             if image_match:
                 image = image_match.group(1)
@@ -118,7 +107,7 @@ def viki_poster(url: str = Query(..., description="Viki content URL")):
     # TV / Series URLs
     else:
         container_id = url.rsplit("/")[-1].split("-")[0]
-        print("Extracted container_id:", container_id)
+        # print("Extracted container_id:", container_id)
         if not container_id:
             return JSONResponse(
                 content={"error": "Invalid Viki URL"},

@@ -160,7 +160,8 @@ class SonyLivExtractor:
             "title": self.extract_title(data),
             "landscape": self._find_first(data, {"thumbnail"}),
             "portrait": self._find_first(data, {"portrait_thumb", "portraitThumb"}),
-            "cover": self._find_first(data, {"masthead_web_v1", "masthead"})
+            "cover": self._find_first(data, {"masthead_web_v1", "masthead"}),
+            "square": self._find_first(data, {"square_thumb", "squareThumb", "square_image", "squareImage"}),
         }
 
 @router.get("/sonyliv")

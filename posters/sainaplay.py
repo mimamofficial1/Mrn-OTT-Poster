@@ -60,6 +60,7 @@ def extract_details(data):
         "title": f"{title} - ({year})",
         "landscape": landscape_url,
         "portrait": portrait_url,
+        "square": None,
     }
 
 @router.get("/sainaplay")

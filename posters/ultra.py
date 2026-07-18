@@ -22,7 +22,8 @@ def ultra(url: str):
             "title": title,
             "publish": publish,
             "landscape": landscape,
-            "portrait": portrait
+            "portrait": portrait,
+            "square": None,
         }
     except json.JSONDecodeError:
         return {"error": "JSON decode error"}

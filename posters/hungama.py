@@ -21,6 +21,7 @@ def extract_hungama_tvshow(api_response: dict):
             "title": f"{title} - ({year})" if year else title,
             "landscape": landscape,
             "portrait": portrait,
+            "square": None,
         }
 
     except (KeyError, TypeError):
@@ -42,6 +43,7 @@ def extract_hungama_movie(api_response: dict):
             "title": f"{title} - ({year})" if year else title,
             "landscape": landscape,
             "portrait": portrait,
+            "square": None,
         }
 
     except (KeyError, TypeError):

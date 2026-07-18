@@ -38,7 +38,8 @@ def shemaroo(url):
     return {
         "title": title,
         "portrait": portrait,
-        "landscape": landscape
+        "landscape": landscape,
+        "square": None,
     }
 
 @router.get("/shemaroo")

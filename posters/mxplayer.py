@@ -27,20 +27,20 @@ def extract_title_from_h1(html_text):
 
 #Transform Bigpic URL
 def transform_bigpic_url(original_url):
-    match = re.match(r"(.*?/16x9/)[^/]+/(.*?)(\.jpg)", original_url)
+    match = re.match(r"(.*?/16x9/)([^/]+)/(.*?)(_badged_\d+)?(\.jpg)", original_url)
     if match:
         base_url = match.group(1)
-        filename = match.group(2)
+        filename = match.group(3)
         return f"{base_url}3840x2160/{filename}.jpg"
     return None
 
 
 #Transform Portrait URL
 def transform_portrait_url(original_url):
-    match = re.match(r"(.*?/2x3/)[^/]+/(.*?)(\.jpg)", original_url)
+    match = re.match(r"(.*?/2x3/)([^/]+)/(.*?)(_badged_\d+)?(\.jpg)", original_url)
     if match:
         base_url = match.group(1)
-        filename = match.group(2)
+        filename = match.group(3)
         return f"{base_url}640x960/{filename}.jpg"
     return None
 
@@ -85,12 +85,15 @@ def mxplayer(url):
           ).year
 
     image = data.get("imageInfo")
+    square = None
     for img in image:
       # print(img)
       if img.get("type") == "bigpic":
           landscape = "https://qqcdnpictest.mxplay.com/"+img.get("url")
       if img.get("type") == "portrait" or img.get("type") == "portrait_large":
           portrait = "https://qqcdnpictest.mxplay.com/"+img.get("url")
+      if img.get("type") and ("square" in img.get("type") or "1x1" in img.get("type")):
+          square = "https://qqcdnpictest.mxplay.com/"+img.get("url")
     logo = data.get("titleContentImageInfo")
     for log in logo:
       if log.get("type") == "banner_and_static_bg_desktop":
@@ -103,7 +106,8 @@ def mxplayer(url):
         "landscape": transform_bigpic_url(landscape),
         "portrait": transform_portrait_url(portrait),
         "cover": cover,
-        "logo": transform_landscape_url(logo)
+        "logo": transform_landscape_url(logo),
+        "square": square,
     }
 
 

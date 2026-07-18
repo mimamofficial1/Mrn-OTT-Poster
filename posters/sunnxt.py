@@ -54,7 +54,8 @@ def sunnxt(url):
     return {
         "title": f"{general.get('title')} ({general.get('displayTitle', '').split()[-1]})",
         "landscape": landscape,
-        "portrait": portrait
+        "portrait": portrait,
+        "square": None,
     }
 
 @router.get("/sunnxt")

@@ -130,7 +130,8 @@ def fetch_addatimes(url):
         "portrait": data.get("vertical_image"),
         "cover": data.get("horizontal_image_no_logo"),
         "logo": data.get("logo"),
-        "banner": data.get("tv_background")
+        "banner": data.get("tv_background"),
+        "square": None,
     }
 
     return result

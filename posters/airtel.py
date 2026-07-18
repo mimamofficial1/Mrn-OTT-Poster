@@ -26,7 +26,8 @@ def airtel(url: str):
     posters = {
         "title": None,
         "portrait": None,
-        "landscape": None
+        "landscape": None,
+        "square": None,
     }
 
     scripts = re.findall(

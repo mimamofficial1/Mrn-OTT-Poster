@@ -53,7 +53,8 @@ def extract_mubi_details(data):
         "landscape": landscape,
         "portrait": portrait,
         "cover": cover,
-        "logo": logo
+        "logo": logo,
+        "square": None,
     }
 
 @router.get("/mubi")

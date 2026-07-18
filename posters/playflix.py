@@ -80,7 +80,8 @@ def playflix(url):
     return {
         "title": title,
         "landscape": landscape,
-        "portrait": portrait
+        "portrait": portrait,
+        "square": None,
     }
 
 @router.get("/playflix")

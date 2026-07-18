@@ -109,6 +109,7 @@ def extract_hoichoi(data, content_type):
             logo = item["titleImage"].get("imageUrl")
 
     landscape_list = []
+    square = None
 
     for img in images:
         reso = img.get("resolution")
@@ -119,6 +120,9 @@ def extract_hoichoi(data, content_type):
 
         elif reso == "3x4" and not portrait:
             portrait = img_url
+
+        elif reso == "1x1" and not square:
+            square = img_url
 
     if len(landscape_list) >= 1:
         landscape = landscape_list[0]
@@ -132,6 +136,7 @@ def extract_hoichoi(data, content_type):
         "cover": cover,
         "portrait": portrait,
         "logo": logo,
+        "square": square,
     }
 
 def hoichoi_scraper(url):

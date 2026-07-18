@@ -31,6 +31,7 @@ def vivamax_movie(content_id: str) -> dict:
         "landscape": data.get("imageLandscape"),
         "portrait": data.get("imagePortrait"),
         "cover": data.get("image"),
+        "square": None,
     }
 
 def vivamax_tvseries(series_title: str) -> dict:
@@ -61,6 +62,7 @@ def vivamax_tvseries(series_title: str) -> dict:
         "landscape": images.get("imageLandscape"),
         "portrait": images.get("imagePortrait"),
         "cover": images.get("image"),
+        "square": None,
     }
 
 def vivamax(url: str) -> dict:

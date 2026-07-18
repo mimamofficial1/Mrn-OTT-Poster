@@ -181,7 +181,8 @@ def extract_asset_info(data):
         "title": f"{title} - ({year})",
         "landscape": landscape_url,
         "banner": banner_url,
-        "portrait": portrait_url
+        "portrait": portrait_url,
+        "square": None,
     }
 
 def extract_asset_id(url: str) -> str:

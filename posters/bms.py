@@ -35,7 +35,8 @@ def bms(url: str):
         return {
             "title": movie_title,
             "landscape": images.get("landscape"),
-            "portrait": images.get("portrait")
+            "portrait": images.get("portrait"),
+            "square": None,
         }
 
     except Exception as e:

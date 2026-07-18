@@ -58,6 +58,7 @@ def fetch_aaonxt(url):
             "landscape": fix_image(movie.get("tvBannerImage")),
             "portrait": fix_image(movie.get("cardImage")),
             "banner": fix_image(movie.get("detailImage")),
+            "square": None,
         }
 
         return result

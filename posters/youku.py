@@ -39,7 +39,8 @@ def youku(url: str):
     return {
         "title": title,
         "landscape": landscape,
-        "portrait": portrait
+        "portrait": portrait,
+        "square": None,
     }
 
 

@@ -43,7 +43,8 @@ def aha(url):
     return {
         "title": f"{title} - ({year})",
         "landscape": landscape,
-        "portrait": portrait
+        "portrait": portrait,
+        "square": None,
     }
 
 @router.get("/aha")

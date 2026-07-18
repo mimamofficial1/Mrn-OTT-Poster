@@ -28,7 +28,8 @@ def extract_series_info(data):
         return {
             "title": f"{title} - ({year})",
             "landscape": landscape,
-            "portrait": portrait
+            "portrait": portrait,
+            "square": None,
         }
 
     except Exception as e:

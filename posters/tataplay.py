@@ -19,7 +19,7 @@ def tataplay(url):
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.0.0 Safari/537.36"
     }
     response = requests.get(api, headers=h)
-    result = {}
+    result = {"square": None}
     data = response.json()
     meta = data.get("data").get("meta", {})
     title = meta.get("title", "") if meta.get("title") else meta.get("brandTitle", "")

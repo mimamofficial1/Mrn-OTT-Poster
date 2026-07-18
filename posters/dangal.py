@@ -34,7 +34,8 @@ def dangalplay(slug, slug_type):
         "landscape": landscape,
         "portrait": portrait,
         "banner": banner,
-        # "Download Link": dl
+        # "Download Link": dl,
+        "square": None,
     }
 
 @router.get("/dangal")

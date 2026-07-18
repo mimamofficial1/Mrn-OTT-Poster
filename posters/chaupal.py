@@ -32,7 +32,8 @@ def chaupal(url):
                 "title": f"{data['name']} - ({data.get('releaseYear')})",
                 "portrait": clean_chaupal_image_url(data["thumbnailUrl"]),
                 "landscape": clean_chaupal_image_url(data["image"]),
-                "type": data.get("@type")
+                "type": data.get("@type"),
+                "square": None,
             }
 
         except (json.JSONDecodeError, KeyError, TypeError):

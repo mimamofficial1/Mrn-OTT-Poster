@@ -32,6 +32,7 @@ def extract_tubi_metadata(data):
         "landscape": landscape,
         "portrait": portrait,
         "logo": logo,
+        "square": None,
     }
 
 

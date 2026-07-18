@@ -60,7 +60,8 @@ def extract_details(data):
         "title": f"{title} - ({year})",
         "landscape": landscape_url,
         "portrait": portrait_url,
-        "banner": banner_url
+        "banner": banner_url,
+        "square": None,
     }
 
 @router.get("/ultrajhakaas")

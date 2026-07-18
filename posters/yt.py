@@ -59,7 +59,8 @@ def youtube(url: str):
     return {
         "title": title,
         "landscape": thumbnail,
-        "video_id": video_id
+        "video_id": video_id,
+        "square": None,
     }
 
 

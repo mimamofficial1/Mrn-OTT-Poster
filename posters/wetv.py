@@ -24,7 +24,8 @@ def wetv(url: str):
     return {
         "title": f"{title} - ({year})",
         "landscape": landscape,
-        "portrait": portrait
+        "portrait": portrait,
+        "square": None,
     }
 
 

@@ -63,7 +63,8 @@ def erosnow_org(url):
         "portrait": portrait,
         "cover": cover,
         "banner": banner,
-        "logo": logo
+        "logo": logo,
+        "square": None,
     }
 
 def erosnow_movie(url):
@@ -98,6 +99,7 @@ def erosnow_movie(url):
         "landscape": landscape,
         "portrait": portrait,
         "banner": banner,
+        "square": None,
         }
     
 @router.get("/erosnow")

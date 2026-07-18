@@ -45,7 +45,8 @@ def extract_ticketnew_movie(data: dict, movie_id: str) -> dict | None:
                     movie.get("videos", {})
                     .get("videoData", [{}])[0]
                     .get("imageUrl")
-                )
+                ),
+                "square": None,
             }
 
         server_state = page_props.get("data", {}).get("serverState", {})
@@ -59,7 +60,8 @@ def extract_ticketnew_movie(data: dict, movie_id: str) -> dict | None:
             return {
                 "title": first.get("name"),
                 "portrait": first.get("image"),
-                "landscape": first.get("video_data", {}).get("thumbnail")
+                "landscape": first.get("video_data", {}).get("thumbnail"),
+                "square": None,
             }
 
         return None

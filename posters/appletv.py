@@ -33,6 +33,10 @@ def extract_apple_tv_images(data):
         title = content.get("title")
     
 
+    square_key = next(
+        (k for k in images if "square" in k.lower() or "1x1" in k.lower()), None
+    )
+
     result = {
         "title": f"{title} - ({year_str})" if year_str else title,
         "landscape": build_image_url(
@@ -43,7 +47,8 @@ def extract_apple_tv_images(data):
         ) if images.get("contentImageTall") else None,
         "logo": build_image_url(
             images.get("contentLogo"), "png"
-        ) if images.get("contentLogo") else None
+        ) if images.get("contentLogo") else None,
+        "square": build_image_url(images.get(square_key), "jpg") if square_key and images.get(square_key) else None,
     }
 
     return result
