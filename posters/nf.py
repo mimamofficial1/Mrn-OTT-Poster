@@ -102,7 +102,7 @@ def fetch_netflix_metadata(netflix_url: str):
 
 NETFLIX_GRAPHQL_URL = "https://web.prod.cloud.netflix.com/graphql"
 
-def fetch_primary_metadata(video_id: str) -> dict:
+def fetch_video_entity(video_id: str) -> dict:
     payload = {
         "operationName": "MiniModalQuery",
         "variables": {
@@ -147,9 +147,71 @@ def fetch_primary_metadata(video_id: str) -> dict:
     content = data["data"]["unifiedEntities"]
 
     for item in content:
-        cover = item.get("storyArt", {}).get("url")
-        logo = item.get("titleLogoUnbranded", {}).get("url")
-        return cover,logo
+        return item or {}
+    return {}
+
+
+def fetch_primary_metadata(video_id: str) -> dict:
+    """Backwards-compatible helper: just the (cover, logo) pair."""
+    item = fetch_video_entity(video_id)
+    cover = (item.get("storyArt") or {}).get("url")
+    logo = (item.get("titleLogoUnbranded") or {}).get("url")
+    return cover, logo
+
+
+def extract_text(field):
+    """Netflix's GraphQL fields are sometimes plain strings, sometimes
+    {'value': '...'}-style wrapper objects. Handle both, return None otherwise."""
+    if isinstance(field, str) and field.strip():
+        return field.strip()
+    if isinstance(field, dict):
+        for k in ("value", "text", "title", "displayString"):
+            v = field.get(k)
+            if isinstance(v, str) and v.strip():
+                return v.strip()
+    return None
+
+
+def build_episode_title(item: dict, fallback_id: str) -> str:
+    """Best-effort episode title: show name + season/episode number when the
+    Netflix response includes them, falling back to a generic label."""
+    show_name = None
+    season_num = None
+    episode_num = None
+    episode_title = None
+    year = None
+
+    for key, value in item.items():
+        low = key.lower()
+        if show_name is None and ("showtitle" in low or ("title" in low and "episode" not in low and "logo" not in low)):
+            show_name = extract_text(value)
+        if episode_title is None and "episodetitle" in low:
+            episode_title = extract_text(value)
+        if season_num is None and "season" in low:
+            text = extract_text(value)
+            if text:
+                m = re.search(r"\d+", text)
+                season_num = m.group(0) if m else text
+        if episode_num is None and "episode" in low and "title" not in low:
+            text = extract_text(value)
+            if text:
+                m = re.search(r"[\d\-–]+", text)
+                episode_num = m.group(0) if m else text
+        if year is None and "year" in low:
+            text = extract_text(value)
+            if text:
+                m = re.search(r"(19|20)\d{2}", text)
+                year = m.group(0) if m else None
+
+    year_suffix = f" - ({year})" if year else ""
+
+    if show_name and season_num and episode_num:
+        return f"{show_name} : Season {season_num} Episode {episode_num}{year_suffix}"
+    if show_name and episode_title:
+        return f"{show_name} : {episode_title}{year_suffix}"
+    if show_name:
+        return f"{show_name}{year_suffix}"
+    return f"Netflix Video {fallback_id}"
 
 # ---------------- EPISODE HELPERS ----------------
 
@@ -197,12 +259,15 @@ def netflix_episode_poster(
         return JSONResponse(content={"error": str(e)}, status_code=400)
 
     try:
-        cover, logo = fetch_primary_metadata(video_id)
+        item = fetch_video_entity(video_id)
     except Exception as e:
         return JSONResponse(
             content={"error": "Failed to fetch episode metadata", "details": str(e)},
             status_code=400,
         )
+
+    cover = (item.get("storyArt") or {}).get("url")
+    logo = (item.get("titleLogoUnbranded") or {}).get("url")
 
     if not cover and not logo:
         return JSONResponse(
@@ -210,8 +275,14 @@ def netflix_episode_poster(
             status_code=404,
         )
 
+    title = build_episode_title(item, video_id)
+
     return {
         "video_id": video_id,
+        "title": title,
         "still": cover,
         "logo": logo,
+        # Raw top-level field names from Netflix's response - send these back
+        # if the title above looks wrong/incomplete so the mapping can be tuned.
+        "_debug_fields": list(item.keys()),
     }
