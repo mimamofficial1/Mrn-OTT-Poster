@@ -24,9 +24,13 @@ Set:
 BOT_TOKEN=your_botfather_token
 API_TOKEN=any_secret_token_you_choose
 API_BASE_URL=http://127.0.0.1:8000
-API_HOST=127.0.0.1
-API_PORT=8000
 ```
+
+`API_HOST` and `API_PORT` are optional and commented out by default - only
+uncomment them if you're running this on your own VPS/PC and specifically
+want to bind to `127.0.0.1`. Leave them commented out on Railway; it
+injects its own `PORT` and needs the server bound to `0.0.0.0`, which
+`run_all.py` already does automatically.
 
 `BOT_TOKEN` comes from Telegram @BotFather.
 `API_TOKEN` can be any secret string, but it must stay the same for the API and bot.
