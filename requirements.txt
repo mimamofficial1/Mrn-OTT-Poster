@@ -3,3 +3,5 @@ uvicorn
 curl_cffi
 pycryptodome
 python-socketio[client]
+python-dotenv
+python-telegram-bot
