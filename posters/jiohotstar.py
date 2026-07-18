@@ -18,8 +18,6 @@ _TYPE_MAP = {
     "sports": "match",
     "clips": "content",
     "episode": "episode",
-    "tv": "episode",
-    "shows": "episode",
 }
 
 
@@ -33,15 +31,28 @@ def extract_hotstar_id_type(value: str, default_type: str = "movie"):
     if value.isdigit():
         return value, default_type
 
-    type_match = re.search(r"/(movies|movie|sports|clips|episode|tv|shows)/", value)
-    content_type = _TYPE_MAP.get(type_match.group(1), default_type) if type_match else default_type
-
     ids = re.findall(r"(\d{6,})", value)
     if not ids:
         raise ValueError(
             "Could not extract a JioHotstar content/episode ID. Send either the "
             "numeric ID or a full hotstar.com URL."
         )
+
+    type_match = re.search(r"/(movies|movie|sports|clips|episode|tv|shows)/(.+)", value)
+
+    if not type_match:
+        return ids[-1], default_type
+
+    keyword = type_match.group(1)
+
+    if keyword in ("tv", "shows"):
+        # .../shows/{slug}/{show-id}                       -> show-level page  (2 segments)
+        # .../shows/{slug}/{show-id}/{ep-slug}/{ep-id}...   -> episode page     (4+ segments)
+        rest = type_match.group(2).split("?")[0].strip("/")
+        segments = [s for s in rest.split("/") if s]
+        content_type = "episode" if len(segments) >= 4 else "show"
+    else:
+        content_type = _TYPE_MAP.get(keyword, default_type)
 
     # The last long numeric segment in a hotstar.com URL is always the
     # content/episode id being viewed (matches how the site itself links).

@@ -67,7 +67,12 @@ def fetch_netflix_metadata(netflix_url: str):
 
     api = "https://postersuniverse.pages.dev/api/metadata"
 
-    res = session.get(api, params={"url": netflix_url}, timeout=20)
+    headers = {
+        "Referer": "https://postersuniverse.pages.dev/netflix",
+        "Origin": "https://postersuniverse.pages.dev",
+    }
+
+    res = session.get(api, params={"url": netflix_url}, headers=headers, timeout=20)
 
     if res.status_code != 200:
         return {"error": f"API failed {res.status_code}", "details": res.text}
